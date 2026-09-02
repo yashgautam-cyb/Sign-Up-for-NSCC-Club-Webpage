@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sign Up</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header style="justify-content: flex-start;">
+        <!--<a href="login.html" class="header-btn">Admin Login</a>-->
+        <span style="color: aliceblue; font-size: 22px; font-weight: 600;">Sign up to join the NSCC Club</span>
+    </header>
+
+    <div class="container">
+        <h2>Create an Account</h2>
+        <form id="signupForm">
+            <input type="text" id="username" placeholder="Username" required>
+            <input type="text" id="email" placeholder="Email" required>
+            <input type="password" id="password" placeholder="Password (Min 6 chars)" required>
+
+            <!--<select id="role">
+                <option value="Member">Member</option>
+                <option value="Admin">Admin</option>
+            </select>-->
+
+            <div id="signup-msg"></div>
+            <button type="submit" class="submit-btn">Sign Up</button>
+        </form>
+    </div>
+
+    <div style="padding: 20px;">Are you an Admin? <a href="login.html">Login here</a></div>
+
+    <script>
+        const signupForm = document.getElementById('signupForm');
+        const signupMsg = document.getElementById('signup-msg');
+        let users = JSON.parse(localStorage.getItem('users')) || [];
+
+        async function hashPassword(password) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
+        }
+
+        signupForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            signupMsg.className = "error"; 
+            
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const role = "Member";
+
+            if (username === "") return signupMsg.textContent = "Username cannot be empty.";
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) return signupMsg.textContent = "Invalid email format.";
+            if (password.length < 6) return signupMsg.textContent = "Password must be at least 6 characters.";
+
+            if (users.some(u => u.username === username)) {
+                return signupMsg.textContent = "Username already taken.";
+            }
+
+            const hashedPassword = await hashPassword(password);
+            const newUser = { username, email, password: hashedPassword, role };
+
+            users.push(newUser);
+            localStorage.setItem('users', JSON.stringify(users));
+
+            signupForm.reset();
+            signupMsg.className = "success";
+            signupMsg.textContent = "Account created!";
+        });
+    </script>
+</body>
+</html>

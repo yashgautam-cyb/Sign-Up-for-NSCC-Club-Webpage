@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <button id="logoutBtn" class="header-btn" style="background: #d4211e;">Logout</button>
+    </header>
+
+    <div class="container" style="max-width: 800px;">
+        <h2>Admin Dashboard</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Password (Hashed)</th>
+                    <th>Delete</th>
+                    <th>Promote</th>
+                </tr>
+            </thead>
+            <tbody id="dashboardBody">
+                <!-- User rows injected here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Security Check: Redirect to login if not authenticated
+        if (sessionStorage.getItem('isAdminLoggedIn') !== 'true') {
+            window.location.href = 'login.html';
+        }
+
+        const dashboardBody = document.getElementById('dashboardBody');
+        const logoutBtn = document.getElementById('logoutBtn');
+        let users = JSON.parse(localStorage.getItem('users')) || [];
+
+        function renderDashboard() {
+            dashboardBody.innerHTML = ""; 
+            users.forEach((user, index) => {
+                const row = document.createElement('tr');
+                if (user.role === "Member") {
+                row.innerHTML = `
+                    <td>${user.username}</td>
+                    <td>${user.email}</td>
+                    <td><strong>${user.role}</strong></td>
+                    <td>${user.password.substring(0, 10)}...</td>
+                    <td><button class="delete-btn" onclick="deleteUser(${index})">Delete</button></td>
+                    <td><button class="promote-btn" onclick="promoteUser(${index})">Promote</button></td>
+                `;
+                }else{
+                row.innerHTML = `
+                    <td>${user.username}</td>
+                    <td>${user.email}</td>
+                    <td><strong>${user.role}</strong></td>
+                    <td>${user.password.substring(0, 10)}...</td>
+                    <td><button class="delete-btn" onclick="deleteUser(${index})">Delete</button></td>
+                    <td><button class="demote-btn" onclick="demoteUser(${index})">Demote</button></td>
+                    `;
+                }
+                dashboardBody.appendChild(row);
+            });
+        }
+
+        // Delete User
+        function deleteUser(index) {
+            users.splice(index, 1);
+            localStorage.setItem('users', JSON.stringify(users));
+            renderDashboard();
+        }
+
+        //Promote User
+        function promoteUser(index) {
+            const userPromote = users.splice(index, 1)[0];
+            userPromote.role = "Admin" ;
+            users.push(userPromote);
+            localStorage.setItem('users', JSON.stringify(users));
+            renderDashboard();
+
+        }
+
+        //Demote User
+        function demoteUser(index) {
+            const userPromote = users.splice(index, 1)[0];
+            userPromote.role = "Member" ;
+            users.push(userPromote);
+            localStorage.setItem('users', JSON.stringify(users));
+            renderDashboard();
+
+        }
+
+        // Logout
+        logoutBtn.addEventListener('click', () => {
+            sessionStorage.removeItem('isAdminLoggedIn'); // Destroy session
+            window.location.href = 'index.html'; // Send back to home
+        });
+
+        // Initial render
+        renderDashboard();
+    </script>
+</body>
+</html>

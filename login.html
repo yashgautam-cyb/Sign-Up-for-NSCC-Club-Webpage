@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Login</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <a href="index.html" class="header-btn">Back to Sign Up</a>
+    </header>
+
+    <div class="container">
+        <h2>Admin Login</h2>
+        <form id="loginForm">
+            <input type="text" id="loginUsername" placeholder="Username" required>
+            <input type="password" id="loginPassword" placeholder="Password" required>
+            <div id="login-msg"></div>
+            <button type="submit" class="submit-btn" style="background: #007BFF;">Login</button>
+        </form>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const loginMsg = document.getElementById('login-msg');
+        let users = JSON.parse(localStorage.getItem('users')) || [];
+
+        async function hashPassword(password) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
+        }
+
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            loginMsg.className = "error";
+            
+            const loginUser = document.getElementById('loginUsername').value.trim();
+            const loginPass = document.getElementById('loginPassword').value;
+            const foundUser = users.find(u => u.username === loginUser);
+
+            if (!foundUser) return loginMsg.textContent = "User not found.";
+
+            const hashedInputPassword = await hashPassword(loginPass);
+            if (hashedInputPassword !== foundUser.password) return loginMsg.textContent = "Incorrect password.";
+            if (foundUser.role !== "Admin") return loginMsg.textContent = "Access Denied: Admin privileges required.";
+
+            // Log the admin in and redirect to dashboard
+            sessionStorage.setItem('isAdminLoggedIn', 'true');
+            window.location.href = 'dashboard.html'; 
+        });
+    </script>
+</body>
+</html>
