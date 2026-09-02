@@ -6,9 +6,9 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header style="justify-content: flex-start;">
-        <!--<a href="login.html" class="header-btn">Admin Login</a>-->
+    <header>
         <span style="color: aliceblue; font-size: 22px; font-weight: 600;">Sign up to join the NSCC Club</span>
+        <button id="themeToggle" class="header-btn" style="background: transparent; border: 1px solid #fff;">🌙 Dark Mode</button>
     </header>
 
     <div class="container">
@@ -18,17 +18,12 @@
             <input type="text" id="email" placeholder="Email" required>
             <input type="password" id="password" placeholder="Password (Min 6 chars)" required>
 
-            <!--<select id="role">
-                <option value="Member">Member</option>
-                <option value="Admin">Admin</option>
-            </select>-->
-
             <div id="signup-msg"></div>
             <button type="submit" class="submit-btn">Sign Up</button>
         </form>
     </div>
 
-    <div style="padding: 20px;">Are you an Admin? <a href="login.html">Login here</a></div>
+    <div style="padding: 20px;">Are you an Admin? <a href="login.html" style="color: inherit;">Login here</a></div>
 
     <script>
         const signupForm = document.getElementById('signupForm');
@@ -71,6 +66,24 @@
             signupMsg.className = "success";
             signupMsg.textContent = "Account created!";
         });
+
+        // Theme Toggle Script
+        const themeToggle = document.getElementById('themeToggle');
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        if (themeToggle) {
+            themeToggle.textContent = savedTheme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+            
+            themeToggle.addEventListener('click', () => {
+                const activeTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = activeTheme === 'dark' ? 'light' : 'dark';
+                
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                themeToggle.textContent = newTheme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+            });
+        }
     </script>
 </body>
 </html>
