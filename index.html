@@ -51,14 +51,7 @@
             const password = document.getElementById('password').value;
             
             //Setting first account to Admin
-            if (totalUsers == 0){
-                const role = "Admin";
-                totalUsers++;
-            }else{
-                const role = "Member";
-                totalUsers++;
-            }
-            localStorage.setItem('total-users', totalUsers);
+            const role = users.length === 0 ? "Admin" : "Member";
 
             //Checks if the username is left empty, email is left empty or has invalid format, and if password is less than 6 characters long
             if (username === "") return signupMsg.textContent = "Username cannot be empty.";
