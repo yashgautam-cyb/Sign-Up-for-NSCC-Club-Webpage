@@ -20,7 +20,6 @@
                     <th>Username</th>
                     <th>Email</th>
                     <th>Role</th>
-                    <th>Password (Hashed)</th>
                     <th>Delete</th>
                     <th>Action</th>
                 </tr>
@@ -41,6 +40,7 @@
         const logoutBtn = document.getElementById('logoutBtn');
         let users = JSON.parse(localStorage.getItem('users')) || [];
 
+        //Function to display all the details of the members
         function renderDashboard() {
             dashboardBody.innerHTML = ""; 
             users.forEach((user, index) => {
@@ -62,7 +62,6 @@
                     <td>${user.username}</td>
                     <td>${user.email}</td>
                     <td>${roleBadge}</td>
-                    <td>${user.password.substring(0, 10)}...</td>
                     <td>
                         <button class="icon-btn delete-btn" onclick="deleteUser(${index})" title="Delete User">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Delete

@@ -29,6 +29,7 @@
         const loginMsg = document.getElementById('login-msg');
         let users = JSON.parse(localStorage.getItem('users')) || [];
 
+        //Hashing entered password to compare to account
         async function hashPassword(password) {
             const encoder = new TextEncoder();
             const data = encoder.encode(password);
@@ -37,20 +38,26 @@
             return hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
         }
 
+        //Executes this when form is submitted
         loginForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             loginMsg.className = "error";
             
             const loginUser = document.getElementById('loginUsername').value.trim();
             const loginPass = document.getElementById('loginPassword').value;
+
+            //Finding data for entered username
             const foundUser = users.find(u => u.username === loginUser);
 
             if (!foundUser) return loginMsg.textContent = "User not found.";
 
             const hashedInputPassword = await hashPassword(loginPass);
+            
+            //Comparing entered password to password in localStorage
             if (hashedInputPassword !== foundUser.password) return loginMsg.textContent = "Incorrect password.";
             if (foundUser.role !== "Admin") return loginMsg.textContent = "Access Denied: Admin privileges required.";
 
+            //setting status of page to admin logged in for the dashboard to be visible and redirecting to the dashboard page
             sessionStorage.setItem('isAdminLoggedIn', 'true');
             window.location.href = 'dashboard.html'; 
         });
