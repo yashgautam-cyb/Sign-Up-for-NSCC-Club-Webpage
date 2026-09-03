@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Sign Up</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/x-icon" href="page_icon.png">
 </head>
 <body>
     <header>
@@ -23,13 +24,15 @@
         </form>
     </div>
 
-    <div style="padding: 20px;">Are you an Admin? <a href="login.html" style="color: inherit;">Login here</a></div>
+    <div style="padding: 20px;">Are you an Admin? <a href="login.html" style="color: rgb(30, 64, 234);">Login here</a></div>
 
     <script>
         const signupForm = document.getElementById('signupForm');
         const signupMsg = document.getElementById('signup-msg');
         let users = JSON.parse(localStorage.getItem('users')) || [];
+        let totalUsers = localStorage.getItem('total-users') || 0;
 
+        //Hashing the password
         async function hashPassword(password) {
             const encoder = new TextEncoder();
             const data = encoder.encode(password);
@@ -38,6 +41,7 @@
             return hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
         }
 
+        //Executes this when the form is submitted
         signupForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             signupMsg.className = "error"; 
@@ -45,23 +49,39 @@
             const username = document.getElementById('username').value.trim();
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
-            const role = "Member";
+            
+            //Setting first account to Admin
+            if (totalUsers == 0){
+                const role = "Admin";
+                totalUsers++;
+            }else{
+                const role = "Member";
+                totalUsers++;
+            }
+            localStorage.setItem('total-users', totalUsers);
 
+            //Checks if the username is left empty, email is left empty or has invalid format, and if password is less than 6 characters long
             if (username === "") return signupMsg.textContent = "Username cannot be empty.";
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) return signupMsg.textContent = "Invalid email format.";
             if (password.length < 6) return signupMsg.textContent = "Password must be at least 6 characters.";
 
+            //Checks if username or email is already in use
             if (users.some(u => u.username === username)) {
                 return signupMsg.textContent = "Username already taken.";
             }
+            if (users.some(u => u.email === email)) {
+                return signupMsg.textContent = "Email is linked with another registration. Please use a new Email.";
+            }
 
+            //Adds the new user data into the localStorage
             const hashedPassword = await hashPassword(password);
             const newUser = { username, email, password: hashedPassword, role };
 
             users.push(newUser);
             localStorage.setItem('users', JSON.stringify(users));
 
+            //Resets the form for the next registration
             signupForm.reset();
             signupMsg.className = "success";
             signupMsg.textContent = "Account created!";
