@@ -76,9 +76,6 @@
         // Delete User
         function deleteUser(index) {
             users.splice(index, 1);
-            let totalUsers = Number(localStorage.getItem('total-users') || 0);
-            totalUsers--;
-            localStorage.setItem('total-users', totalUsers)
             localStorage.setItem('users', JSON.stringify(users));
             renderDashboard();
         }

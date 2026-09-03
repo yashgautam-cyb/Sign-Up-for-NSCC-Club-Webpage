@@ -30,7 +30,6 @@
         const signupForm = document.getElementById('signupForm');
         const signupMsg = document.getElementById('signup-msg');
         let users = JSON.parse(localStorage.getItem('users')) || [];
-        let totalUsers = localStorage.getItem('total-users') || 0;
 
         //Hashing the password
         async function hashPassword(password) {
