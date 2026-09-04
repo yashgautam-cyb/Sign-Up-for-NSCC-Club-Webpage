@@ -30,15 +30,22 @@
         </table>
     </div>
 
+    <script src="utils.js"></script>
     <script>
+
+        // Initialising theme for page
+        initTheme();
+
         // Security Check: Redirect to login if not authenticated
         if (sessionStorage.getItem('isAdminLoggedIn') !== 'true') {
-            window.location.href = 'login.html';
+            window.location.href = 'index.html';
         }
 
         const dashboardBody = document.getElementById('dashboardBody');
         const logoutBtn = document.getElementById('logoutBtn');
         let users = JSON.parse(localStorage.getItem('users')) || [];
+        const currentUser = sessionStorage.getItem('currentUser');
+        const totalAdmins = parseInt(localStorage.getItem('total-admins')) || 0;
 
         //Function to display all the details of the members
         function renderDashboard() {
@@ -50,23 +57,47 @@
                     ? `<span class="badge badge-admin">Admin</span>` 
                     : `<span class="badge badge-member">Member</span>`;
                 
-                const actionBtn = user.role === "Member"
-                    ? `<button class="icon-btn promote-btn" onclick="promoteUser(${index})" title="Promote to Admin">
+                let actionBtn;
+                let deleteBtn;
+
+                if (user.username === currentUser) {
+                    actionBtn = " ";
+                    deleteBtn = " ";
+                } else if (totalAdmins <= 1 && user.role === "Admin") {
+                    actionBtn = " ";
+                    deleteBtn = " ";
+                } else if (user.role === "Admin") {
+                    actionBtn = `<button class="icon-btn demote-btn" onclick="toggleRole(${index})" title="Demote to Member">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg> Demote
+                                 </button>`;
+                    deleteBtn = `<button class="icon-btn delete-btn" onclick="deleteUser(${index})" title="Delete User">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Delete
+                                </button>`;
+                } else if (user.role === "Member") {
+                    actionBtn = `<button class="icon-btn promote-btn" onclick="toggleRole(${index})" title="Promote to Admin">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg> Promote
+                                 </button>`;
+                    deleteBtn = `<button class="icon-btn delete-btn" onclick="deleteUser(${index})" title="Delete User">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Delete
+                                </button>`;
+                }
+                /*user.username === currentUser ? actionBtn = " " : actionBtn = totalAdmins <= 1 ? " " : user.role === "Member"
+                    ? `<button class="icon-btn promote-btn" onclick="toggleRole(${index})" title="Promote to Admin">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg> Promote
                        </button>`
-                    : `<button class="icon-btn demote-btn" onclick="demoteUser(${index})" title="Demote to Member">
+                    : `<button class="icon-btn demote-btn" onclick="toggleRole(${index})" title="Demote to Member">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg> Demote
                        </button>`;
+
+                user.username === currentUser ? deleteBtn = " " : deleteBtn = totalAdmins <= 1 ? " " : `<button class="icon-btn delete-btn" onclick="deleteUser(${index})" title="Delete User">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Delete
+                    </button>`;*/
 
                 row.innerHTML = `
                     <td>${user.username}</td>
                     <td>${user.email}</td>
                     <td>${roleBadge}</td>
-                    <td>
-                        <button class="icon-btn delete-btn" onclick="deleteUser(${index})" title="Delete User">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Delete
-                        </button>
-                    </td>
+                    <td>${deleteBtn}</td>
                     <td>${actionBtn}</td>
                 `;
                 dashboardBody.appendChild(row);
@@ -80,47 +111,23 @@
             renderDashboard();
         }
 
-        // Promote User
-        function promoteUser(index) {
-            const userPromote = users.splice(index, 1)[0];
-            userPromote.role = "Admin";
-            users.push(userPromote);
-            localStorage.setItem('users', JSON.stringify(users));
-            renderDashboard();
-        }
-
-        // Demote User
-        function demoteUser(index) {
-            const userPromote = users.splice(index, 1)[0];
-            userPromote.role = "Member";
-            users.push(userPromote);
+        // Promote/Demote User
+        function toggleRole(index) {
+            users[index].role = users[index].role === "Admin" ? "Member" : "Admin";
             localStorage.setItem('users', JSON.stringify(users));
             renderDashboard();
         }
 
         // Logout
         logoutBtn.addEventListener('click', () => {
+            sessionStorage.removeItem('currentUser');
             sessionStorage.removeItem('isAdminLoggedIn');
             window.location.href = 'index.html';
         });
 
-        // Theme Toggle Script
-        const themeToggle = document.getElementById('themeToggle');
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        if (themeToggle) {
-            themeToggle.textContent = savedTheme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
-            
-            themeToggle.addEventListener('click', () => {
-                const activeTheme = document.documentElement.getAttribute('data-theme');
-                const newTheme = activeTheme === 'dark' ? 'light' : 'dark';
-                
-                document.documentElement.setAttribute('data-theme', newTheme);
-                localStorage.setItem('theme', newTheme);
-                themeToggle.textContent = newTheme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
-            });
-        }
+        // Updating the total number of admins in localStorage
+        const updatedTotalAdmins = users.filter(u => u.role === "Admin").length;
+        localStorage.setItem('total-admins', updatedTotalAdmins);
 
         // Initial render
         renderDashboard();
