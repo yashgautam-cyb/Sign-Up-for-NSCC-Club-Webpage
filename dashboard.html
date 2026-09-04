@@ -36,19 +36,66 @@
         // Initialising theme for page
         initTheme();
 
-        // Security Check: Redirect to login if not authenticated
-        if (sessionStorage.getItem('isAdminLoggedIn') !== 'true') {
-            window.location.href = 'index.html';
-        }
-
         const dashboardBody = document.getElementById('dashboardBody');
         const logoutBtn = document.getElementById('logoutBtn');
         let users = JSON.parse(localStorage.getItem('users')) || [];
         const currentUser = sessionStorage.getItem('currentUser');
         const totalAdmins = parseInt(localStorage.getItem('total-admins')) || 0;
 
+        function verifyActiveSession() {
+            if (sessionStorage.getItem('isAdminLoggedIn') !== 'true') {
+                window.location.href = 'index.html';
+                return;
+            }
+
+        let users = JSON.parse(localStorage.getItem('users')) || [];
+        const currentUser = sessionStorage.getItem('currentUser');
+
+            if (!currentUser) {
+                logoutUser("Session invalid.");
+                return;
+            }
+
+            const user = users.find(u => u.username === currentUser);
+
+            // Triggered when another admin deletes this account
+            if (!user) {
+                logoutUser("Your account has been deleted by an admin.");
+                return;
+            }
+
+            // Triggered when another admin demotes this account
+            if (user.role !== "Admin") {
+                logoutUser("Your admin privileges have been revoked.");
+                return;
+            }
+        }
+
+        //Logout function to clear sessionStorage and redirect to login page
+        function logoutUser(reasonMessage) {
+            sessionStorage.removeItem('isAdminLoggedIn');
+            sessionStorage.removeItem('currentUser');
+            if (reasonMessage) alert(reasonMessage);
+            window.location.href = 'index.html';
+        }
+
+        // Instant detection when localStorage is altered in another tab
+        window.addEventListener('storage', (event) => {
+            if (event.key === 'users') {
+                verifyActiveSession();
+                renderDashboard();
+            }
+        });
+
+        // Background polling fallback every 2 seconds
+        setInterval(verifyActiveSession, 2000);
+        
         //Function to display all the details of the members
         function renderDashboard() {
+
+            
+        const totalAdmins = parseInt(localStorage.getItem('total-admins')) || 0;
+
             dashboardBody.innerHTML = ""; 
             users.forEach((user, index) => {
                 const row = document.createElement('tr');
@@ -81,17 +128,6 @@
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Delete
                                 </button>`;
                 }
-                /*user.username === currentUser ? actionBtn = " " : actionBtn = totalAdmins <= 1 ? " " : user.role === "Member"
-                    ? `<button class="icon-btn promote-btn" onclick="toggleRole(${index})" title="Promote to Admin">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg> Promote
-                       </button>`
-                    : `<button class="icon-btn demote-btn" onclick="toggleRole(${index})" title="Demote to Member">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg> Demote
-                       </button>`;
-
-                user.username === currentUser ? deleteBtn = " " : deleteBtn = totalAdmins <= 1 ? " " : `<button class="icon-btn delete-btn" onclick="deleteUser(${index})" title="Delete User">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Delete
-                    </button>`;*/
 
                 row.innerHTML = `
                     <td>${user.username}</td>
@@ -108,6 +144,10 @@
         function deleteUser(index) {
             users.splice(index, 1);
             localStorage.setItem('users', JSON.stringify(users));
+
+            // Updating the total number of admins in localStorage
+            const updatedTotalAdmins = users.filter(u => u.role === "Admin").length;
+            localStorage.setItem('total-admins', updatedTotalAdmins);
             renderDashboard();
         }
 
@@ -115,21 +155,20 @@
         function toggleRole(index) {
             users[index].role = users[index].role === "Admin" ? "Member" : "Admin";
             localStorage.setItem('users', JSON.stringify(users));
+
+            // Updating the total number of admins in localStorage
+            const updatedTotalAdmins = users.filter(u => u.role === "Admin").length;
+            localStorage.setItem('total-admins', updatedTotalAdmins);
             renderDashboard();
         }
 
         // Logout
         logoutBtn.addEventListener('click', () => {
-            sessionStorage.removeItem('currentUser');
-            sessionStorage.removeItem('isAdminLoggedIn');
-            window.location.href = 'index.html';
+            logoutUser();
         });
 
-        // Updating the total number of admins in localStorage
-        const updatedTotalAdmins = users.filter(u => u.role === "Admin").length;
-        localStorage.setItem('total-admins', updatedTotalAdmins);
-
-        // Initial render
+        // Initial render and session verification
+        verifyActiveSession();
         renderDashboard();
     </script>
 </body>
